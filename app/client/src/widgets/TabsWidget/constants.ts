@@ -43,7 +43,7 @@ export interface TabsWidgetProps<T extends TabContainerWidgetProps>
   borderRadius: string;
   boxShadow?: string;
   primaryColor: string;
-  padding?: number;
+  padding?: number | string;
 }
 
 export const SCROLL_NAV_CONTROL_CONTAINER_WIDTH = 30;

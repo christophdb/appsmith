@@ -1,3 +1,4 @@
+import { objectKeys } from "@appsmith/utils";
 import type { WidgetEntity } from "ee/entities/DataTree/types";
 import { isWidget } from "ee/workers/Evaluation/evaluationUtils";
 import WidgetFactory from "WidgetProvider/factory";
@@ -144,7 +145,7 @@ export const handleIfParentIsListWidgetWhilePasting = (
       ).slice();
 
       // iterating over each keys of the new createdWidget checking if value contains currentItem
-      const keys = Object.keys(currentWidget);
+      const keys = objectKeys(currentWidget);
 
       for (let i = 0; i < keys.length; i++) {
         const key = keys[i];
@@ -205,7 +206,7 @@ export const handleSpecificCasesWhilePasting = (
 ) => {
   // this is the case when whole list widget is copied and pasted
   if (widget?.type === "LIST_WIDGET") {
-    Object.keys(widget.template).map((widgetName) => {
+    objectKeys(widget.template).map((widgetName) => {
       const oldWidgetName = widgetName;
       const newWidgetName = widgetNameMap[oldWidgetName];
 
@@ -269,7 +270,7 @@ export const handleSpecificCasesWhilePasting = (
     widgets[widget.widgetId] = widget;
   } else if (widget?.type === "MODAL_WIDGET") {
     // if Modal is being copied handle all onClose action rename
-    const oldWidgetName = Object.keys(widgetNameMap).find(
+    const oldWidgetName = objectKeys(widgetNameMap).find(
       (key) => widgetNameMap[key] === widget.widgetName,
     );
     // get all the button, icon widgets
@@ -393,7 +394,7 @@ export function getWidgetDescendantToReset(
 
   const sortedWidgetsMeta = sortWidgetsMetaByParent(widgetsMeta, widgetId);
 
-  for (const childMetaWidgetId of Object.keys(
+  for (const childMetaWidgetId of objectKeys(
     sortedWidgetsMeta.childrenWidgetsMeta,
   )) {
     const evaluatedChildWidget = find(evaluatedDataTree, function (entity) {
@@ -789,10 +790,11 @@ export function getMousePositions(
  * @returns
  */
 export function getSnappedGrid(LayoutWidget: WidgetProps, canvasWidth: number) {
-  // Use parent's padding when set (e.g. from Tabs/Container/List with configurable padding), else fall back to WIDGET_PADDING
+  const layoutWidgetWithPadding = LayoutWidget as WidgetProps & {
+    parentPadding?: number;
+  };
   const effectiveWidgetPadding =
-    (LayoutWidget as WidgetProps & { parentPadding?: number }).parentPadding ??
-    WIDGET_PADDING;
+    layoutWidgetWithPadding.parentPadding ?? WIDGET_PADDING;
 
   // For all widgets inside a container, we remove both container padding as well as widget padding from component width
   let padding =
@@ -1123,7 +1125,7 @@ export function getReflowedPositions(
     [widgetId: string]: FlattenedWidgetProps;
   } = { ...widgets };
 
-  const reflowWidgetKeys = Object.keys(reflowingWidgets || {});
+  const reflowWidgetKeys = objectKeys(reflowingWidgets || {});
 
   // if there are no reflowed widgets return the original widgets
   if (!reflowingWidgets || !gridProps || reflowWidgetKeys.length <= 0)
@@ -1535,8 +1537,8 @@ export function getNextWidgetName(
   // TODO: Fix this the next time the file is edited
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const defaultConfig: any = WidgetFactory.widgetConfigMap.get(type);
-  const widgetNames = Object.keys(widgets).map((w) => widgets[w].widgetName);
-  const entityNames = Object.keys(evalTree);
+  const widgetNames = objectKeys(widgets).map((w) => widgets[w].widgetName);
+  const entityNames = objectKeys(evalTree);
   let prefix = defaultConfig.widgetName;
 
   if (options && options.prefix) {
@@ -1873,12 +1875,12 @@ const updateListWidgetBindings = (
   let mainCanvasId = "";
   let mainContainerId = "";
   const oldWidgetName =
-    Object.keys(widgetNameMap).find(
+    objectKeys(widgetNameMap).find(
       (widgetName) =>
         widgetNameMap[widgetName] === widgets[listWidgetId].widgetName,
     ) ?? "";
 
-  Object.keys(widgets).forEach((widgetId) => {
+  objectKeys(widgets).forEach((widgetId) => {
     if (widgets[widgetId].parentId === listWidgetId) {
       mainCanvasId = widgetId;
       mainContainerId = widgets[widgetId].children?.[0] ?? "";

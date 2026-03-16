@@ -1,3 +1,4 @@
+import { objectKeys } from "@appsmith/utils";
 import { Alignment } from "@blueprintjs/core";
 import { ButtonPlacementTypes, ButtonVariantTypes } from "components/constants";
 import type { OnButtonClickProps } from "components/propertyControls/ButtonControl";
@@ -7,6 +8,7 @@ import { EvaluationSubstitutionType } from "constants/EvaluationConstants";
 import { EVALUATION_PATH } from "utils/DynamicBindingUtils";
 import type { ButtonWidgetProps } from "widgets/ButtonWidget/widget";
 import type { JSONFormWidgetProps } from ".";
+import { WIDGET_PADDING } from "constants/WidgetConstants";
 import { FieldType, MAX_ALLOWED_FIELDS, ROOT_SCHEMA_KEY } from "../constants";
 import { ComputedSchemaStatus, computeSchema } from "./helper";
 import generatePanelPropertyConfig from "./propertyConfig/generatePanelPropertyConfig";
@@ -52,7 +54,7 @@ export const sourceDataValidationFn = (
     };
   }
 
-  if (_.isObject(value) && Object.keys(value).length === 0) {
+  if (_.isObject(value) && objectKeys(value).length === 0) {
     return {
       isValid: false,
       parsed: value,
@@ -695,14 +697,25 @@ export const styleConfig = [
       {
         propertyName: "padding",
         label: "Padding (px)",
-        helpText: "Sets the padding around the widget",
-        placeholderText: "0",
+        helpText: `Default: ${WIDGET_PADDING}px. Override with one value for all sides, or 2–4 values (top right bottom left, CSS order). Example: 4 or 4 0 4 0`,
+        placeholderText: "4 or 4 0 4 0",
+        defaultValue: WIDGET_PADDING,
         controlType: "INPUT_TEXT",
         isBindProperty: true,
         isTriggerProperty: false,
         validation: {
-          type: ValidationTypes.NUMBER,
-          params: { min: 0 },
+          type: ValidationTypes.TEXT,
+          params: {
+            regex: /^\s*\d+(\.\d+)?(\s+\d+(\.\d+)?){0,3}\s*$/,
+          },
+        },
+        helperText: (props: JSONFormWidgetProps) => {
+          const p = props.padding;
+
+          if (p === undefined || p === null || String(p).trim() === "")
+            return `Using default: ${WIDGET_PADDING}px. Enter a value to override.`;
+
+          return undefined;
         },
       },
     ],

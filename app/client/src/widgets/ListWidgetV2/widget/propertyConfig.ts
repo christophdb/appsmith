@@ -1,6 +1,8 @@
+import { objectKeys } from "@appsmith/utils";
 import { get, isPlainObject } from "lodash";
 import log from "loglevel";
 
+import { WIDGET_PADDING } from "constants/WidgetConstants";
 import { EVALUATION_PATH, EVAL_VALUE_PATH } from "utils/DynamicBindingUtils";
 import { EvaluationSubstitutionType } from "constants/EvaluationConstants";
 import type { ValidationResponse } from "constants/WidgetValidation";
@@ -215,7 +217,7 @@ export const primaryKeyOptions = (props: ListWidgetProps) => {
   }
 
   if (isValidListData(listData)) {
-    Object.keys(listData[0]).forEach((key) => {
+    objectKeys(listData[0]).forEach((key) => {
       if (key !== prevSelectedKey) {
         options.push({
           label: key,
@@ -385,7 +387,7 @@ export const PropertyPaneContentConfig = [
           return {
             currentItem: Object.assign(
               {},
-              ...Object.keys(get(items, "0", {})).map((key) => ({
+              ...objectKeys(get(items, "0", {})).map((key) => ({
                 [key]: "",
               })),
             ),
@@ -448,14 +450,25 @@ export const PropertyPaneStyleConfig = [
       {
         propertyName: "padding",
         label: "Padding (px)",
-        helpText: "Sets the padding around the widget",
-        placeholderText: "0",
+        helpText: `Default: ${WIDGET_PADDING}px. Override with one value for all sides, or 2–4 values (top right bottom left, CSS order). Example: 4 or 4 0 4 0`,
+        placeholderText: "4 or 4 0 4 0",
+        defaultValue: WIDGET_PADDING,
         controlType: "INPUT_TEXT",
         isBindProperty: true,
         isTriggerProperty: false,
         validation: {
-          type: ValidationTypes.NUMBER,
-          params: { min: 0 },
+          type: ValidationTypes.TEXT,
+          params: {
+            regex: /^\s*\d+(\.\d+)?(\s+\d+(\.\d+)?){0,3}\s*$/,
+          },
+        },
+        helperText: (props: ListWidgetProps) => {
+          const p = props.padding;
+
+          if (p === undefined || p === null || String(p).trim() === "")
+            return `Using default: ${WIDGET_PADDING}px. Enter a value to override.`;
+
+          return undefined;
         },
       },
     ],

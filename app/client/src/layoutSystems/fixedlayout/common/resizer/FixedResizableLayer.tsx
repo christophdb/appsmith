@@ -2,6 +2,7 @@ import { WIDGET_PADDING } from "constants/WidgetConstants";
 import React, { memo } from "react";
 import type { BaseWidgetProps } from "widgets/BaseWidgetHOC/withBaseWidgetHOC";
 import { ResizableComponent } from "layoutSystems/common/resizer/ResizableComponent";
+import { getEffectivePadding, parsePaddingToSides } from "utils/paddingUtils";
 
 export const FixedResizableLayer = memo((props: BaseWidgetProps) => {
   if (props.resizeDisabled || props.type === "SKELETON_WIDGET") {
@@ -9,8 +10,9 @@ export const FixedResizableLayer = memo((props: BaseWidgetProps) => {
   }
 
   const paddingOffset =
-    "padding" in props && typeof props.padding === "number"
-      ? props.padding
+    "padding" in props &&
+    (typeof props.padding === "number" || typeof props.padding === "string")
+      ? getEffectivePadding(parsePaddingToSides(props.padding))
       : WIDGET_PADDING;
 
   return (

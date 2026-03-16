@@ -96,7 +96,7 @@ export interface JSONFormWidgetProps extends WidgetProps {
   formData: Record<string, unknown>;
   isVisible: boolean;
   onSubmit?: string;
-  padding?: number;
+  padding?: number | string;
   resetButtonLabel: string;
   resetButtonStyles: ButtonStyleProps;
   schema: Schema;

@@ -6,8 +6,9 @@ import {
   CONTAINER_GRID_PADDING,
   CSSUnits,
   PositionTypes,
-  WIDGET_PADDING,
 } from "constants/WidgetConstants";
+import type { PaddingSides } from "utils/paddingUtils";
+import { parsePaddingToSides } from "utils/paddingUtils";
 import { generateClassName } from "utils/generators";
 import styled from "styled-components";
 import { useClickToSelectWidget } from "utils/hooks/useClickToSelectWidget";
@@ -50,7 +51,7 @@ export interface PositionedContainerProps {
   isDisabled?: boolean;
   isVisible?: boolean;
   widgetName: string;
-  padding?: number;
+  padding?: number | string;
 }
 
 export function PositionedContainer(
@@ -87,7 +88,10 @@ export function PositionedContainer(
   // const style: BaseStyle = getStyle(componentWidth, componentHeight);
   const x = style.xPosition + (style.xPositionUnit || "px");
   const y = style.yPosition + (style.yPositionUnit || "px");
-  const padding = props.padding ?? WIDGET_PADDING;
+  const paddingSides: PaddingSides = useMemo(
+    () => parsePaddingToSides(props.padding),
+    [props.padding],
+  );
   const clickToSelectWidget = useClickToSelectWidget(props.widgetId);
   // memoized className
   const containerClassName = useMemo(() => {
@@ -150,7 +154,10 @@ export function PositionedContainer(
       height:
         reflowHeight || style.componentHeight + (style.heightUnit || "px"),
       width: reflowWidth || style.componentWidth + (style.widthUnit || "px"),
-      padding: padding + "px",
+      paddingTop: paddingSides.top + "px",
+      paddingRight: paddingSides.right + "px",
+      paddingBottom: paddingSides.bottom + "px",
+      paddingLeft: paddingSides.left + "px",
       zIndex,
       backgroundColor: "inherit",
       ...reflowedPositionStyles,
@@ -162,10 +169,12 @@ export function PositionedContainer(
   }, [
     style,
     isReflowEffected,
-    onHoverZIndex,
     zIndex,
     reflowedPosition,
-    padding,
+    paddingSides,
+    isDropTarget,
+    x,
+    y,
   ]);
 
   const [handleMouseOver, handleMouseLeave] = useHoverToFocusWidget(
@@ -178,7 +187,7 @@ export function PositionedContainer(
     <PositionedWidget
       className={containerClassName}
       data-hidden={!props.isVisible || undefined}
-      data-testid="test-widget"
+      data-testid="t--positioned-widget"
       data-widgetname-cy={props.widgetName}
       disabled={props.isDisabled}
       id={props.widgetId}

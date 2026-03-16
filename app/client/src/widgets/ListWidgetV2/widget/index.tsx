@@ -57,6 +57,7 @@ import defaultProps from "./defaultProps";
 import IconSVG from "../icon.svg";
 import ThumbnailSVG from "../thumbnail.svg";
 import { renderAppsmithCanvas } from "layoutSystems/CanvasFactory";
+import { getEffectivePadding, parsePaddingToSides } from "utils/paddingUtils";
 import { klonaRegularWithTelemetry } from "utils/helpers";
 
 const getCurrentItemsViewBindingTemplate = () => ({
@@ -966,7 +967,9 @@ class ListWidget extends BaseWidget<
     metaMainCanvas.minHeight = componentHeight;
     metaMainCanvas.rightColumn = componentWidth;
     metaMainCanvas.noPad = true;
-    metaMainCanvas.parentPadding = this.props.padding ?? WIDGET_PADDING;
+    metaMainCanvas.parentPadding = getEffectivePadding(
+      parsePaddingToSides(this.props.padding),
+    );
     metaMainCanvas.bottomRow = this.mainMetaCanvasWidgetBottomRow();
 
     return metaMainCanvas as MetaWidget;
@@ -1006,6 +1009,14 @@ class ListWidget extends BaseWidget<
     } else {
       this.props.updateWidgetMetaProperty("pageNo", page);
     }
+  };
+
+  handleNextPageClick = () => {
+    this.onPageChange(this.props.pageNo + 1);
+  };
+
+  handlePrevPageClick = () => {
+    this.onPageChange(this.props.pageNo - 1);
   };
 
   executeOnPageChange = () => {
@@ -1407,7 +1418,7 @@ class ListWidget extends BaseWidget<
   };
 
   renderPaginationUI = () => {
-    const { isLoading, pageNo, serverSidePagination } = this.props;
+    const { isLoading, serverSidePagination } = this.props;
     const disableNextPage = this.shouldDisableNextPage();
     const totalDataCount = this.getTotalDataCount();
 
@@ -1421,9 +1432,9 @@ class ListWidget extends BaseWidget<
           disableNextPage={disableNextPage}
           disabled={false && this.props.renderMode === RenderModes.CANVAS}
           isLoading={isLoading}
-          nextPageClick={() => this.onPageChange(pageNo + 1)}
+          nextPageClick={this.handleNextPageClick}
           pageNo={this.props.pageNo}
-          prevPageClick={() => this.onPageChange(pageNo - 1)}
+          prevPageClick={this.handlePrevPageClick}
         />
       ) : (
         <ListPagination
@@ -1527,7 +1538,7 @@ export interface ListWidgetProps<T extends WidgetProps = WidgetProps>
   children?: T[];
   currentItemStructure?: Record<string, string>;
   itemSpacing?: number;
-  padding?: number;
+  padding?: number | string;
   infiniteScroll?: boolean;
   level?: number;
   levelData?: LevelData;

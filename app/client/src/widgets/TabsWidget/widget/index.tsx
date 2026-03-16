@@ -1,3 +1,4 @@
+import { objectKeys } from "@appsmith/utils";
 import { ReduxActionTypes } from "ee/constants/ReduxActionConstants";
 import {
   FlexVerticalAlignment,
@@ -5,7 +6,6 @@ import {
   Positioning,
 } from "layoutSystems/common/utils/constants";
 import { EventType } from "constants/AppsmithActionConstants/ActionConstants";
-import { WIDGET_PADDING } from "constants/WidgetConstants";
 import type { ValidationResponse } from "constants/WidgetValidation";
 import { ValidationTypes } from "constants/WidgetValidation";
 import { find } from "lodash";
@@ -33,6 +33,7 @@ import { Colors } from "constants/Colors";
 import { FILL_WIDGET_MIN_WIDTH } from "constants/minWidthConstants";
 import {
   GridDefaults,
+  WIDGET_PADDING,
   WIDGET_TAGS,
   WidgetHeightLimits,
 } from "constants/WidgetConstants";
@@ -41,6 +42,7 @@ import { BlueprintOperationTypes } from "WidgetProvider/types";
 import IconSVG from "../icon.svg";
 import ThumbnailSVG from "../thumbnail.svg";
 import { renderAppsmithCanvas } from "layoutSystems/CanvasFactory";
+import { getEffectivePadding, parsePaddingToSides } from "utils/paddingUtils";
 
 export function selectedTabValidation(
   value: unknown,
@@ -491,14 +493,25 @@ class TabsWidget extends BaseWidget<
           {
             propertyName: "padding",
             label: "Padding (px)",
-            helpText: "Sets the padding around the widget",
-            placeholderText: "0",
+            helpText: `Default: ${WIDGET_PADDING}px. Override with one value for all sides, or 2–4 values (top right bottom left, CSS order). Example: 4 or 4 0 4 0`,
+            placeholderText: "4 or 4 0 4 0",
+            defaultValue: WIDGET_PADDING,
             controlType: "INPUT_TEXT",
             isBindProperty: true,
             isTriggerProperty: false,
             validation: {
-              type: ValidationTypes.NUMBER,
-              params: { min: 0 },
+              type: ValidationTypes.TEXT,
+              params: {
+                regex: /^\s*\d+(\.\d+)?(\s+\d+(\.\d+)?){0,3}\s*$/,
+              },
+            },
+            helperText: (props: TabsWidgetProps) => {
+              const p = props.padding;
+
+              if (p === undefined || p === null || String(p).trim() === "")
+                return `Using default: ${WIDGET_PADDING}px. Enter a value to override.`;
+
+              return undefined;
             },
           },
         ],
@@ -577,10 +590,11 @@ class TabsWidget extends BaseWidget<
 
   getWidgetView() {
     const { componentWidth } = this.props;
+    const paddingSides = parsePaddingToSides(this.props.padding);
     const tabsComponentProps = {
       ...this.props,
       tabs: this.getVisibleTabs(),
-      width: componentWidth - (this.props.padding ?? WIDGET_PADDING) * 2,
+      width: componentWidth - (paddingSides.left + paddingSides.right),
     };
     const isAutoHeightEnabled: boolean =
       isAutoHeightEnabledForWidget(this.props) &&
@@ -629,7 +643,9 @@ class TabsWidget extends BaseWidget<
       ? childWidgetData.bottomRow
       : componentHeight - 1;
     childWidgetData.parentId = this.props.widgetId;
-    childWidgetData.parentPadding = this.props.padding ?? WIDGET_PADDING;
+    childWidgetData.parentPadding = getEffectivePadding(
+      parsePaddingToSides(this.props.padding),
+    );
     childWidgetData.minHeight = componentHeight;
     const selectedTabProps = Object.values(this.props.tabsObj)?.filter(
       (item) => item.widgetId === selectedTabWidgetId,
@@ -714,7 +730,7 @@ class TabsWidget extends BaseWidget<
   };
 
   componentDidMount() {
-    Object.keys(this.props.tabsObj || {}).length &&
+    objectKeys(this.props.tabsObj || {}).length &&
       this.setDefaultSelectedTabWidgetId();
   }
 }

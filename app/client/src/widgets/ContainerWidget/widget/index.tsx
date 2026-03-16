@@ -42,6 +42,7 @@ import {
   ResponsiveBehavior,
 } from "layoutSystems/common/utils/constants";
 import { renderAppsmithCanvas } from "layoutSystems/CanvasFactory";
+import { getEffectivePadding, parsePaddingToSides } from "utils/paddingUtils";
 import { generateDefaultLayoutPreset } from "layoutSystems/anvil/layoutComponents/presets/DefaultLayoutPreset";
 import type { CanvasWidgetsReduxState } from "ee/reducers/entityReducers/canvasWidgetsReducer";
 import { LayoutSystemTypes } from "layoutSystems/types";
@@ -319,14 +320,25 @@ export class ContainerWidget extends BaseWidget<
           {
             propertyName: "padding",
             label: "Padding (px)",
-            helpText: "Sets the padding around the widget",
-            placeholderText: "0",
+            helpText: `Default: ${WIDGET_PADDING}px. Override with one value for all sides, or 2–4 values (top right bottom left, CSS order). Example: 4 or 4 0 4 0`,
+            placeholderText: "4 or 4 0 4 0",
+            defaultValue: WIDGET_PADDING,
             controlType: "INPUT_TEXT",
             isBindProperty: true,
             isTriggerProperty: false,
             validation: {
-              type: ValidationTypes.NUMBER,
-              params: { min: 0 },
+              type: ValidationTypes.TEXT,
+              params: {
+                regex: /^\s*\d+(\.\d+)?(\s+\d+(\.\d+)?){0,3}\s*$/,
+              },
+            },
+            helperText: (props: ContainerWidgetProps<WidgetProps>) => {
+              const p = props.padding;
+
+              if (p === undefined || p === null || String(p).trim() === "")
+                return `Using default: ${WIDGET_PADDING}px. Enter a value to override.`;
+
+              return undefined;
             },
           },
         ],
@@ -374,7 +386,9 @@ export class ContainerWidget extends BaseWidget<
     childWidget.canExtend = this.props.shouldScrollContents;
 
     childWidget.parentId = this.props.widgetId;
-    childWidget.parentPadding = this.props.padding ?? WIDGET_PADDING;
+    childWidget.parentPadding = getEffectivePadding(
+      parsePaddingToSides(this.props.padding),
+    );
     // Pass layout controls to children
     childWidget.positioning =
       childWidget?.positioning || this.props.positioning;
@@ -434,7 +448,7 @@ export interface ContainerWidgetProps<T extends WidgetProps>
   onClickCapture?: MouseEventHandler<HTMLDivElement>;
   shouldScrollContents?: boolean;
   noPad?: boolean;
-  padding?: number;
+  padding?: number | string;
   positioning?: Positioning;
   forceFullOpacity?: boolean; // used to force full opacity for ui module instance meta widgets
 }
